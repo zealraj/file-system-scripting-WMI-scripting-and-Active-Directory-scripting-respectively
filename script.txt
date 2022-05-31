@@ -1,0 +1,73 @@
+#Practical2.ps1
+
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $True, ParameterSetName = "CopyOldDocs", Position = 0)]
+        [Switch] $CopyOldDocs,
+		[Parameter(Mandatory = $False, ValueFromPipelineByPropertyName = $True, ParameterSetName = "CopyOldDocs", Position = 1)]
+        [String] $Docs,
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ParameterSetName = "GetOSVersion", Position = 0)]
+        [Switch] $GetOSVersion,
+        [Parameter(Mandatory = $False, ValueFromPipelineByPropertyName = $true, ParameterSetName = "GetOSVersion", Position = 1)]
+        [ValidateNotNullOrEmpty()]
+        [String] $ComputerName,
+        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true, ParameterSetName = "RemoveExpiredUsers", Position = 0)]
+        [Switch] $RemoveExpiredUsers
+    )
+$BackupPath="C:\DOCXbackup"
+$Format="docx"
+$Retention=24
+
+function Copy-OldDocs(){
+	If(!(test-path $BackupPath))
+	{
+		New-Item -ItemType Directory -Force -Path $path
+	}
+	if (!$Docs){
+		$Docs=Read-host "Enter name of the directory to look for old docx"
+	}
+	$files=Get-ChildItem -path $Docs -Recurse -Filter "*.docx" |?{$_.LastWriteTime -lt (get-date).addmonths(-$Retention)}
+    if ($files.count -gt 0){
+	    write-host "Found $files.count DOCX files which are older than $Retention months. Moving them to $BackupPath now."
+	    foreach ($file in $files) {
+	    	write-host "Moving $file.fullname to $BackupPath."
+	    	move-item -path $file.fullname -destination $BackupPath -PassThru
+	    	
+	    }
+    }
+    else {
+        write-host "No DOCX files which are older than $Retention months."
+    }
+}
+
+function Get-OSVersion(){
+	if ($ComputerName) {
+		$os=Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $ComputerName|Select-Object version
+		Write-host "The version of operating system on $ComputerName is $($os.version)"
+	}
+	else {
+		$os=Get-CimInstance -ClassName Win32_OperatingSystem |Select-Object version
+		Write-host "The version of operating system on localhost is $($os.version)"
+	}
+}
+
+function Remove-ExpiredUsers(){
+	$users=Get-ADUser -Properties * | Select-Object AccountExpirationDate,SamAccountName
+	foreach ($user in $users){
+		if ( ($user.AccountExpirationDate -(Get-Date).Date).Days -le -1 ){
+			Remove-ADUser -Identity $user.SamAccountName
+			write-host "Removed $($user.SamAccountName)"
+		}
+	}
+
+}
+
+if ($CopyOldDocs) {
+	Copy-OldDocs
+}
+if ($RemoveExpiredUsers)
+{
+	Remove-ExpiredUsers
+}
+if ($GetOSVersion)	{
+	Get-OSVersion
+}
