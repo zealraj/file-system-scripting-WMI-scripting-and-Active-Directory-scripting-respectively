@@ -1,7 +1,7 @@
 # file-system-scripting-WMI-scripting-and-Active-Directory-scripting-respectively
 i have written different functions/pipelines in powershell that deals with  deals with file system scripting, WMI scripting, and Active Directory scripting respectively
 
-    Line number 3 to 15 are the parameters for the script. They are divided into 3 groups -> CopyOldDocs/GetOSVersion/RemoveExpiredUsers. The keyword used to divide params in groups is ParameterSetName.
+Line number 3 to 15 are the parameters for the script. They are divided into 3 groups -> CopyOldDocs/GetOSVersion/RemoveExpiredUsers. The keyword used to divide params in groups is ParameterSetName.
 
 It is mandatory to supply a parameter to the script when running as [Switch] $CopyOldDocs, [Switch] $GetOSVersion, [Switch] $RemoveExpiredUsers all are mandatory parameters belonging to different groups.
 
